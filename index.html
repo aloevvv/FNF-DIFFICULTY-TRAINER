@@ -192,16 +192,15 @@ const SongSelectState = {
         this.index = (this.index + this.songs.length) % this.songs.length;
 
         if (Input.justPressed("Enter")) {
-    const songFile = this.songs[this.index].file;
+            const songFile = this.songs[this.index].file;
 
-    LoadingState.task = async () => {
-        const data = await SongLoader.load(songFile);
-        GameplayState.loadSong(data);
-    };
+            LoadingState.task = async () => {
+                const data = await SongLoader.load(songFile);
+                GameplayState.loadSong(data);
+            };
 
-    changeState(LoadingState);
-}
-
+            changeState(LoadingState);
+        }
     },
 
     render() {
