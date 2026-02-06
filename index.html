@@ -181,25 +181,41 @@ const SongSelectState = {
     init() {},
 
     update() {
-        if (Input.justPressed("ArrowLeft")) this.index--;
-        if (Input.justPressed("ArrowRight")) this.index++;
+        if (Input.justPressed("ArrowUp")) this.index--;
+        if (Input.justPressed("ArrowDown")) this.index++;
 
         this.index = (this.index + this.songs.length) % this.songs.length;
 
         if (Input.justPressed("Enter")) {
-            SongLoader.load(this.songs[this.index].file).then(data => {
-                GameplayState.loadSong(data);
-                changeState(GameplayState);
-            });
+            SongLoader.load(this.songs[this.index].file)
+                .then(data => {
+                    GameplayState.loadSong(data);
+                    changeState(GameplayState);
+                })
+                .catch(err => {
+                    console.error("Failed to load song:", err);
+                    alert("Could not load: " + this.songs[this.index].file);
+                });
         }
     },
 
     render() {
         Renderer.clear();
-        Renderer.drawText("SELECT SONG", 280, 150, 48);
-        Renderer.drawText(this.songs[this.index].name, 200, 300, 28);
+        Renderer.drawText("SELECT SONG", 280, 100, 48);
+
+        this.songs.forEach((song, i) => {
+            const isSelected = (i === this.index);
+            Renderer.drawText(
+                (isSelected ? "> " : "  ") + song.name,
+                200,
+                200 + (i * 50),
+                isSelected ? 32 : 24,
+                isSelected ? "cyan" : "white"
+            );
+        });
     }
 };
+
 
 const SettingsState = {
     init() {},
@@ -300,16 +316,17 @@ function changeState(state) {
 }
 
 function gameLoop() {
-    Input.update(); 
     currentState.update();
     currentState.render();
+    Input.update();
     requestAnimationFrame(gameLoop);
 }
 
 
 
+
 changeState(MenuState);
-gameLoop(); // UPDATE
+gameLoop();
 
 </script>
 
