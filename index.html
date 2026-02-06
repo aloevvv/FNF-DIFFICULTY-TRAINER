@@ -3,8 +3,11 @@
 <head>
 <title>Funkin' Trainer</title>
 <meta charset="UTF-8">
+<style>
+    body { margin: 0; background: black; }
+</style>
 </head>
-<body style="margin:0; background:black;">
+<body>
 
 <canvas id="game" width="800" height="600"></canvas>
 
@@ -15,7 +18,7 @@ const ctx = canvas.getContext("2d");
 
 let currentState = null;
 let songStartTime = 0;
-let playbackSpeed = 1.0;
+
 
 const Input = {
     keys: {},
@@ -37,36 +40,66 @@ const Input = {
 
 Input.init();
 
+const assets = {
+    arrows: {
+        left: new Image(),
+        down: new Image(),
+        up: new Image(),
+        right: new Image()
+    },
+    receptors: {
+        left: new Image(),
+        down: new Image(),
+        up: new Image(),
+        right: new Image()
+    }
+};
+
+assets.arrows.left.src = "assets/left.png";
+assets.arrows.down.src = "assets/down.png";
+assets.arrows.up.src = "assets/up.png";
+assets.arrows.right.src = "assets/right.png";
+
+assets.receptors.left.src = "assets/left_judgement.png";
+assets.receptors.down.src = "assets/down_judgement.png";
+assets.receptors.up.src = "assets/up_judgement.png";
+assets.receptors.right.src = "assets/right_judgement.png";
+
 const Renderer = {
     clear() {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     },
 
-    drawText(text, x, y, size = 24, color = "white") {
-        ctx.fillStyle = color;
-        ctx.font = size + "px Arial";
-        ctx.fillText(text, x, y);
-    },
-
-    drawArena() {
-        ctx.fillStyle = "#222";
-        ctx.fillRect(0, 500, canvas.width, 10);
+    drawReceptors() {
+        const lanes = ["left", "down", "up", "right"];
 
         for (let i = 0; i < 4; i++) {
-            ctx.fillStyle = "#333";
-            ctx.fillRect(150 + i * 100, 0, 80, canvas.height);
+            const img = assets.receptors[lanes[i]];
+            if (img.complete) {
+                ctx.drawImage(img, 150 + i * 100, 100, 80, 80);
+            }
         }
     },
 
     drawNote(lane, y) {
-        ctx.fillStyle = "cyan";
-        ctx.fillRect(150 + lane * 100, y, 80, 20);
+        const lanes = ["left", "down", "up", "right"];
+        const img = assets.arrows[lanes[lane]];
+
+        if (img.complete) {
+            ctx.drawImage(img, 150 + lane * 100, y, 80, 80);
+        }
+    },
+
+    drawText(text, x, y, size = 24, color = "white") {
+        ctx.fillStyle = color;
+        ctx.font = size + "px Arial";
+        ctx.fillText(text, x, y);
     }
 };
 
 function getSongTime() {
-    return (performance.now() - songStartTime) * playbackSpeed;
+    return performance.now() - songStartTime;
 }
 
 const judgeWindows = {
@@ -84,6 +117,7 @@ function judgeNotePress(note, pressTime) {
     if (diff <= judgeWindows.bad) return "BAD";
     return "SHIT";
 }
+
 
 const SongLoader = {
     async load(path) {
@@ -127,7 +161,7 @@ const MenuState = {
 
 const SongSelectState = {
     index: 0,
-    songs: ["songs/song1.json", "songs/song2.json", "songs/song3.json"],
+    songs: ["songs/song1.json"],
 
     init() {},
 
@@ -169,7 +203,6 @@ const SettingsState = {
 const GameplayState = {
     notes: [],
     bpm: 0,
-    speed: 1.0,
 
     lastJudge: "",
     judgeTimer: 0,
@@ -177,7 +210,6 @@ const GameplayState = {
     loadSong(data) {
         this.notes = data.notes;
         this.bpm = data.bpm;
-        this.speed = data.speed || 1.0;
 
         songStartTime = performance.now();
     },
@@ -185,25 +217,25 @@ const GameplayState = {
     update() {
         const t = getSongTime();
 
-if (Input.justPressed("ArrowLeft"))  this.tryHit(0, t);
-if (Input.justPressed("ArrowDown"))  this.tryHit(1, t);
-if (Input.justPressed("ArrowUp"))    this.tryHit(2, t);
-if (Input.justPressed("ArrowRight")) this.tryHit(3, t);
-      
-if (Input.justPressed("d")) this.tryHit(0, t);
-if (Input.justPressed("f")) this.tryHit(1, t);
-if (Input.justPressed("j")) this.tryHit(2, t);
-if (Input.justPressed("k")) this.tryHit(3, t);
+        // Arrow keys
+        if (Input.justPressed("ArrowLeft"))  this.tryHit(0, t);
+        if (Input.justPressed("ArrowDown"))  this.tryHit(1, t);
+        if (Input.justPressed("ArrowUp"))    this.tryHit(2, t);
+        if (Input.justPressed("ArrowRight")) this.tryHit(3, t);
 
-if (Input.justPressed("z")) this.tryHit(0, t);
-if (Input.justPressed("x")) this.tryHit(1, t);
-if (Input.justPressed(",")) this.tryHit(2, t);
-if (Input.justPressed(".")) this.tryHit(3, t);
+        // DFJK
+        if (Input.justPressed("d")) this.tryHit(0, t);
+        if (Input.justPressed("f")) this.tryHit(1, t);
+        if (Input.justPressed("j")) this.tryHit(2, t);
+        if (Input.justPressed("k")) this.tryHit(3, t);
 
+        // ZX,.
+        if (Input.justPressed("z")) this.tryHit(0, t);
+        if (Input.justPressed("x")) this.tryHit(1, t);
+        if (Input.justPressed(",")) this.tryHit(2, t);
+        if (Input.justPressed(".")) this.tryHit(3, t);
 
-        if (this.judgeTimer > 0) {
-            this.judgeTimer -= 16;
-        }
+        if (this.judgeTimer > 0) this.judgeTimer -= 16;
     },
 
     tryHit(lane, t) {
@@ -215,13 +247,11 @@ if (Input.justPressed(".")) this.tryHit(3, t);
 
         this.lastJudge = result;
         this.judgeTimer = 300;
-
-        console.log(result);
     },
 
     render() {
         Renderer.clear();
-        Renderer.drawArena();
+        Renderer.drawReceptors();
 
         const t = getSongTime();
 
@@ -229,7 +259,7 @@ if (Input.justPressed(".")) this.tryHit(3, t);
             if (note.hit) return;
 
             const timeUntilHit = note.time - t;
-            const y = 500 - timeUntilHit * 0.3;
+            const y = 500 + timeUntilHit * 0.3;
 
             Renderer.drawNote(note.lane, y);
         });
@@ -238,7 +268,7 @@ if (Input.justPressed(".")) this.tryHit(3, t);
             Renderer.drawText(
                 this.lastJudge,
                 360,
-                300,
+                200,
                 48,
                 this.lastJudge === "SICK" ? "cyan" :
                 this.lastJudge === "GOOD" ? "green" :
