@@ -310,8 +310,9 @@ const GameplayState = {
         this.notes.forEach(note => {
             if (note.hit) return;
 
-            const timeUntilHit = note.time - t;
-            const y = 500 + timeUntilHit * 0.3;
+            const scrollSpeed = this.bpm / 100;
+            const y = 500 - (t - note.time) * scrollSpeed * 0.45;
+
 
             Renderer.drawNote(note.lane, y);
         });
