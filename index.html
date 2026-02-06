@@ -192,16 +192,16 @@ const SongSelectState = {
         this.index = (this.index + this.songs.length) % this.songs.length;
 
         if (Input.justPressed("Enter")) {
-            SongLoader.load(this.songs[this.index].file)
-                .then(data => {
-                    GameplayState.loadSong(data);
-                    changeState(GameplayState);
-                })
-                .catch(err => {
-                    console.error("Failed to load song:", err);
-                    alert("Could not load: " + this.songs[this.index].file);
-                });
-        }
+    const songFile = this.songs[this.index].file;
+
+    LoadingState.task = async () => {
+        const data = await SongLoader.load(songFile);
+        GameplayState.loadSong(data);
+    };
+
+    changeState(LoadingState);
+}
+
     },
 
     render() {
@@ -235,6 +235,35 @@ const SettingsState = {
         Renderer.drawText("Press ESC to return", 260, 300, 24);
     }
 };
+
+const LoadingState = {
+    message: "Loading...",
+    task: null,
+    done: false,
+
+    init() {
+        this.done = false;
+        this.message = "Loading...";
+
+        this.task()
+            .then(() => {
+                this.done = true;
+                changeState(GameplayState);
+            })
+            .catch(err => {
+                console.error(err);
+                this.message = "Failed to load!";
+            });
+    },
+
+    update() {},
+
+    render() {
+        Renderer.clear();
+        Renderer.drawText(this.message, 300, 250, 48, "white");
+    }
+};
+
 
 const GameplayState = {
     notes: [],
