@@ -165,9 +165,13 @@ const MenuState = {
     }
 };
 
-const SongSelectState = {
+    const SongSelectState = {
     index: 0,
-    songs: ["songs/song1.json"],
+    songs: [
+        { file: "songs/song1.json", name: "Song 1" },
+        { file: "songs/song2.json", name: "Song 2" },
+        { file: "songs/song3.json", name: "Song 3" }
+    ],
 
     init() {},
 
@@ -178,7 +182,7 @@ const SongSelectState = {
         this.index = (this.index + this.songs.length) % this.songs.length;
 
         if (Input.justPressed("Enter")) {
-            SongLoader.load(this.songs[this.index]).then(data => {
+            SongLoader.load(this.songs[this.index].file).then(data => {
                 GameplayState.loadSong(data);
                 changeState(GameplayState);
             });
@@ -188,7 +192,7 @@ const SongSelectState = {
     render() {
         Renderer.clear();
         Renderer.drawText("SELECT SONG", 280, 150, 48);
-        Renderer.drawText(this.songs[this.index], 200, 300, 28);
+        Renderer.drawText(this.songs[this.index].name, 200, 300, 28);
     }
 };
 
