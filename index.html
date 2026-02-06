@@ -285,11 +285,12 @@ function changeState(state) {
 }
 
 function gameLoop() {
-    Input.update();
     currentState.update();
     currentState.render();
+    Input.update();
     requestAnimationFrame(gameLoop);
 }
+
 
 changeState(MenuState);
 gameLoop();
