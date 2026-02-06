@@ -12,7 +12,6 @@
 
 <canvas id="game" width="800" height="600" tabindex="1"></canvas>
 
-
 <script>
 
 const canvas = document.getElementById("game");
@@ -23,14 +22,10 @@ window.addEventListener("keydown", e => {
     if (block.includes(e.key)) e.preventDefault();
 }, { passive: false });
 
-window.onload = () => {
-    canvas.focus();
-};
-
+window.onload = () => canvas.focus();
 
 let currentState = null;
 let songStartTime = 0;
-
 
 const Input = {
     keys: {},
@@ -51,6 +46,27 @@ const Input = {
 };
 
 Input.init();
+
+const SettingsState = {
+    speed: 1.0, // GLOBAL TIME SCALE
+
+    init() {},
+
+    update() {
+        if (Input.justPressed("ArrowLeft")) this.speed = Math.max(0.1, this.speed - 0.1);
+        if (Input.justPressed("ArrowRight")) this.speed = Math.min(3.0, this.speed + 0.1);
+
+        if (Input.justPressed("Escape")) changeState(MenuState);
+    },
+
+    render() {
+        Renderer.clear();
+        Renderer.drawText("SETTINGS", 300, 150, 48);
+        Renderer.drawText("Scroll Speed (Time Scale): " + this.speed.toFixed(1), 200, 260, 32);
+        Renderer.drawText("Left/Right to change", 260, 300, 24);
+        Renderer.drawText("Press ESC to return", 260, 340, 24);
+    }
+};
 
 const assets = {
     arrows: {
@@ -85,55 +101,50 @@ const Renderer = {
 
     drawReceptors() {
         const lanes = ["left", "down", "up", "right"];
-
         for (let i = 0; i < 4; i++) {
             const img = assets.receptors[lanes[i]];
-            if (img.complete) {
-                ctx.drawImage(img, 150 + i * 100, 100, 80, 80);
-            }
+            if (img.complete) ctx.drawImage(img, 150 + i * 100, 100, 80, 80);
         }
     },
 
     drawNote(lane, y) {
         const lanes = ["left", "down", "up", "right"];
         const img = assets.arrows[lanes[lane]];
-
-        if (img.complete) {
-            ctx.drawImage(img, 150 + lane * 100, y, 80, 80);
-        }
+        if (img.complete) ctx.drawImage(img, 150 + lane * 100, y, 80, 80);
     },
 
     drawText(text, x, y, size = 24, color = "white") {
-    ctx.font = `${size}px "VT323"`;
-    ctx.textBaseline = "top";
-    ctx.lineWidth = 6;
-    ctx.strokeStyle = "black";
-    ctx.strokeText(text, x, y);
-    ctx.fillStyle = color;
-    ctx.fillText(text, x, y);
+        ctx.font = `${size}px "VT323"`;
+        ctx.textBaseline = "top";
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = "black";
+        ctx.strokeText(text, x, y);
+        ctx.fillStyle = color;
+        ctx.fillText(text, x, y);
     }
 };
 
 function getSongTime() {
-    return performance.now() - songStartTime;
+    return (performance.now() - songStartTime) * SettingsState.speed;
 }
 
+// JUDGEMENT WINDOWS IN BEATS (fractions of a beat)
 const judgeWindows = {
-    sick: 45,
-    good: 90,
-    bad: 135,
-    shit: 160
+    sick: 0.09,
+    good: 0.18,
+    bad: 0.27,
+    shit: 0.32
 };
 
-function judgeNotePress(note, pressTime) {
+function judgeNotePress(note, pressTime, bpm) {
+    const msPerBeat = 60000 / bpm;
     const diff = Math.abs(pressTime - note.time);
 
-    if (diff <= judgeWindows.sick) return "SICK";
-    if (diff <= judgeWindows.good) return "GOOD";
-    if (diff <= judgeWindows.bad) return "BAD";
+    if (diff <= judgeWindows.sick * msPerBeat) return "SICK";
+    if (diff <= judgeWindows.good * msPerBeat) return "GOOD";
+    if (diff <= judgeWindows.bad  * msPerBeat) return "BAD";
     return "SHIT";
 }
-
 
 const SongLoader = {
     async load(path) {
@@ -220,35 +231,15 @@ const SongSelectState = {
     }
 };
 
-
-const SettingsState = {
-    init() {},
-
-    update() {
-        if (Input.justPressed("Escape")) changeState(MenuState);
-    },
-
-    render() {
-        Renderer.clear();
-        Renderer.drawText("SETTINGS (WIP)", 250, 200, 40);
-        Renderer.drawText("Press ESC to return", 260, 300, 24);
-    }
-};
-
 const LoadingState = {
     message: "Loading...",
     task: null,
-    done: false,
 
     init() {
-        this.done = false;
         this.message = "Loading...";
 
         this.task()
-            .then(() => {
-                this.done = true;
-                changeState(GameplayState);
-            })
+            .then(() => changeState(GameplayState))
             .catch(err => {
                 console.error(err);
                 this.message = "Failed to load!";
@@ -259,10 +250,9 @@ const LoadingState = {
 
     render() {
         Renderer.clear();
-        Renderer.drawText(this.message, 300, 250, 48, "white");
+        Renderer.drawText(this.message, 300, 250, 48);
     }
 };
-
 
 const GameplayState = {
     notes: [],
@@ -274,30 +264,28 @@ const GameplayState = {
     loadSong(data) {
         this.notes = data.notes;
         this.bpm = data.bpm;
-
         songStartTime = performance.now();
     },
 
     update() {
         const t = getSongTime();
 
-        // Arrow keys
-        if (Input.justPressed("ArrowLeft"))  this.tryHit(0, t);
-        if (Input.justPressed("ArrowDown"))  this.tryHit(1, t);
-        if (Input.justPressed("ArrowUp"))    this.tryHit(2, t);
-        if (Input.justPressed("ArrowRight")) this.tryHit(3, t);
+        const hit = (lane) => this.tryHit(lane, t);
 
-        // DFJK
-        if (Input.justPressed("d")) this.tryHit(0, t);
-        if (Input.justPressed("f")) this.tryHit(1, t);
-        if (Input.justPressed("j")) this.tryHit(2, t);
-        if (Input.justPressed("k")) this.tryHit(3, t);
+        if (Input.justPressed("ArrowLeft")) hit(0);
+        if (Input.justPressed("ArrowDown")) hit(1);
+        if (Input.justPressed("ArrowUp")) hit(2);
+        if (Input.justPressed("ArrowRight")) hit(3);
 
-        // ZX,.
-        if (Input.justPressed("z")) this.tryHit(0, t);
-        if (Input.justPressed("x")) this.tryHit(1, t);
-        if (Input.justPressed(",")) this.tryHit(2, t);
-        if (Input.justPressed(".")) this.tryHit(3, t);
+        if (Input.justPressed("d")) hit(0);
+        if (Input.justPressed("f")) hit(1);
+        if (Input.justPressed("j")) hit(2);
+        if (Input.justPressed("k")) hit(3);
+
+        if (Input.justPressed("z")) hit(0);
+        if (Input.justPressed("x")) hit(1);
+        if (Input.justPressed(",")) hit(2);
+        if (Input.justPressed(".")) hit(3);
 
         if (this.judgeTimer > 0) this.judgeTimer -= 16;
     },
@@ -306,7 +294,7 @@ const GameplayState = {
         const note = this.notes.find(n => n.lane === lane && !n.hit);
         if (!note) return;
 
-        const result = judgeNotePress(note, t);
+        const result = judgeNotePress(note, t, this.bpm);
         note.hit = true;
 
         this.lastJudge = result;
@@ -354,9 +342,6 @@ function gameLoop() {
     Input.update();
     requestAnimationFrame(gameLoop);
 }
-
-
-
 
 changeState(MenuState);
 gameLoop();
