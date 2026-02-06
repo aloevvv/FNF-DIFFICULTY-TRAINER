@@ -2,6 +2,7 @@
 <html>
 <head>
 <title>Funkin' Trainer</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <meta charset="UTF-8">
 <style>
     body { margin: 0; background: black; }
@@ -103,9 +104,13 @@ const Renderer = {
     },
 
     drawText(text, x, y, size = 24, color = "white") {
-        ctx.fillStyle = color;
-        ctx.font = size + "px Arial";
-        ctx.fillText(text, x, y);
+    ctx.font = `${size}px "VT323"`;
+    ctx.textBaseline = "top";
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = "black";
+    ctx.strokeText(text, x, y);
+    ctx.fillStyle = color;
+    ctx.fillText(text, x, y);
     }
 };
 
