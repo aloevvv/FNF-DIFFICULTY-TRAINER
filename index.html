@@ -186,7 +186,7 @@ const MenuState = {
 const SongSelectState = {
     index: 0,
     songs: [
-        { file: "songs/song1.json", name: "Spookeez (Nightmare)" },
+        { file: "songs/spookeez.json", name: "Spookeez (Nightmare)" },
         { file: "songs/song2.json", name: "Song 2" },
         { file: "songs/song3.json", name: "Song 3" }
     ],
@@ -348,6 +348,7 @@ const missWindow = judgeWindows.shit * msPerBeat;
 this.notes.forEach(note => {
     if (!note.hit && t > (note.time + missWindow)) {
         this.misses++;
+        note.hit = true;
     }
 });
 
