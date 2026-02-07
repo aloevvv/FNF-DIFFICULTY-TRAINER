@@ -342,12 +342,10 @@ const GameplayState = {
 const missWindow = judgeWindows.shit * msPerBeat;
 
 this.notes.forEach(note => {
-    if (!note.hit && t > note.time + missWindow) {
-        note.hit = true;
+    if (!note.hit && t > (note.time + missWindow)) {
         this.misses++;
     }
 });
-
 
         if (this.notes.length > 0) {
             const lastNoteTime = this.notes[this.notes.length - 1].time;
@@ -390,9 +388,12 @@ this.notes.forEach(note => {
 
         this.notes.forEach(note => {
     if (note.hit) return;
+
     const scrollSpeed = (this.bpm / 100) * 0.45;
     const y = 100 + (note.time - t) * scrollSpeed;
-    Renderer.drawNote(note.lane, y);
+    if (y > -100 && y < 650) {
+        Renderer.drawNote(note.lane, y);
+    }
 });
 
 
