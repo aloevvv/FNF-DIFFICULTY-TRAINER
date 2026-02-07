@@ -13,6 +13,7 @@
 <canvas id="game" width="800" height="600" tabindex="1"></canvas>
 
 <script>
+
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
@@ -47,20 +48,21 @@ const Input = {
 Input.init();
 
 const SettingsState = {
-    speed: 1.0, // global time scale
+    speed: 1.0, // GLOBAL TIME SCALE
 
     init() {},
 
     update() {
         if (Input.justPressed("ArrowLeft")) this.speed = Math.max(0.1, this.speed - 0.1);
         if (Input.justPressed("ArrowRight")) this.speed = Math.min(3.0, this.speed + 0.1);
+
         if (Input.justPressed("Escape")) changeState(MenuState);
     },
 
     render() {
         Renderer.clear();
         Renderer.drawText("SETTINGS", 300, 150, 48);
-        Renderer.drawText("Speed (Time Scale): " + this.speed.toFixed(1) + "x", 200, 260, 32);
+        Renderer.drawText("Scroll Speed (Time Scale): " + this.speed.toFixed(1), 200, 260, 32);
         Renderer.drawText("Left/Right to change", 260, 300, 24);
         Renderer.drawText("Press ESC to return", 260, 340, 24);
     }
@@ -122,16 +124,15 @@ const Renderer = {
     }
 };
 
-// time in ms, scaled by SettingsState.speed
 function getSongTime() {
     return (performance.now() - songStartTime) * SettingsState.speed;
 }
 
-// judgement windows in beats (fractions of a beat)
+// JUDGEMENT WINDOWS IN BEATS (fractions of a beat)
 const judgeWindows = {
     sick: 0.09,
     good: 0.18,
-    bad:  0.27,
+    bad: 0.27,
     shit: 0.32
 };
 
@@ -253,43 +254,6 @@ const LoadingState = {
     }
 };
 
-const ResultsState = {
-    sicks: 0,
-    goods: 0,
-    bads: 0,
-    shits: 0,
-    misses: 0,
-
-    setResults(game) {
-        this.sicks = game.sicks;
-        this.goods = game.goods;
-        this.bads = game.bads;
-        this.shits = game.shits;
-        this.misses = game.misses;
-    },
-
-    init() {},
-
-    update() {
-        if (Input.justPressed("Enter")) {
-            changeState(SongSelectState);
-        }
-    },
-
-    render() {
-        Renderer.clear();
-        Renderer.drawText("RESULTS", 320, 100, 48);
-
-        Renderer.drawText("SICKS:  " + this.sicks, 300, 200, 32, "cyan");
-        Renderer.drawText("GOODS:  " + this.goods, 300, 240, 32, "green");
-        Renderer.drawText("BADS:   " + this.bads, 300, 280, 32, "yellow");
-        Renderer.drawText("SHITS:  " + this.shits, 300, 320, 32, "red");
-        Renderer.drawText("MISSES: " + this.misses, 300, 360, 32, "white");
-
-        Renderer.drawText("Press ENTER to return", 260, 450, 24);
-    }
-};
-
 const GameplayState = {
     notes: [],
     bpm: 0,
@@ -297,25 +261,9 @@ const GameplayState = {
     lastJudge: "",
     judgeTimer: 0,
 
-    sicks: 0,
-    goods: 0,
-    bads: 0,
-    shits: 0,
-    misses: 0,
-
     loadSong(data) {
         this.notes = data.notes;
         this.bpm = data.bpm;
-
-        this.sicks = 0;
-        this.goods = 0;
-        this.bads = 0;
-        this.shits = 0;
-        this.misses = 0;
-
-        this.lastJudge = "";
-        this.judgeTimer = 0;
-
         songStartTime = performance.now();
     },
 
@@ -340,25 +288,6 @@ const GameplayState = {
         if (Input.justPressed(".")) hit(3);
 
         if (this.judgeTimer > 0) this.judgeTimer -= 16;
-
-        // mark misses
-        const msPerBeat = 60000 / this.bpm;
-        const missWindow = judgeWindows.shit * msPerBeat;
-        this.notes.forEach(note => {
-            if (!note.hit && t - note.time > missWindow) {
-                note.hit = true;
-                this.misses++;
-            }
-        });
-
-        // detect end of song (2s after last note)
-        if (this.notes.length > 0) {
-            const lastNoteTime = this.notes[this.notes.length - 1].time;
-            if (t > lastNoteTime + 2000) {
-                ResultsState.setResults(this);
-                changeState(ResultsState);
-            }
-        }
     },
 
     tryHit(lane, t) {
@@ -367,11 +296,6 @@ const GameplayState = {
 
         const result = judgeNotePress(note, t, this.bpm);
         note.hit = true;
-
-        if (result === "SICK") this.sicks++;
-        else if (result === "GOOD") this.goods++;
-        else if (result === "BAD") this.bads++;
-        else if (result === "SHIT") this.shits++;
 
         this.lastJudge = result;
         this.judgeTimer = 300;
@@ -382,13 +306,13 @@ const GameplayState = {
         Renderer.drawReceptors();
 
         const t = getSongTime();
-        const SCROLL_PX_PER_MS = 1.8; // constant speed; BPM & Settings.speed don't change distance
 
         this.notes.forEach(note => {
             if (note.hit) return;
 
-            const timeUntilHit = note.time - t;
-            const y = 500 + timeUntilHit * SCROLL_PX_PER_MS;
+            const scrollSpeed = this.bpm / 100;
+            const y = 500 - (t - note.time) * scrollSpeed * 0.45;
+
 
             Renderer.drawNote(note.lane, y);
         });
@@ -422,6 +346,7 @@ function gameLoop() {
 
 changeState(MenuState);
 gameLoop();
+
 </script>
 
 </body>
