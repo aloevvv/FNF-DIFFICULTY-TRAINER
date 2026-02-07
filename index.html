@@ -129,19 +129,17 @@ function getSongTime() {
 }
 
 const judgeWindows = {
-    sick: 0.09,
-    good: 0.18,
-    bad: 0.27,
-    shit: 0.32
+    sick: 45, 
+    good: 90,
+    bad: 135,
+    shit: 160
 };
 
-function judgeNotePress(note, pressTime, bpm) {
-    const msPerBeat = 60000 / bpm;
+function judgeNotePress(note, pressTime) {
     const diff = Math.abs(pressTime - note.time);
-
-    if (diff <= judgeWindows.sick * msPerBeat) return "SICK";
-    if (diff <= judgeWindows.good * msPerBeat) return "GOOD";
-    if (diff <= judgeWindows.bad  * msPerBeat) return "BAD";
+    if (diff <= judgeWindows.sick) return "SICK";
+    if (diff <= judgeWindows.good) return "GOOD";
+    if (diff <= judgeWindows.bad)  return "BAD";
     return "SHIT";
 }
 
