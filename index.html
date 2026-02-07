@@ -104,6 +104,11 @@ const Renderer = {
         for (let i = 0; i < 4; i++) {
             const img = assets.receptors[lanes[i]];
             if (img.complete) ctx.drawImage(img, 150 + i * 100, 100, 80, 80);
+            ctx.imageSmoothingEnabled = false;
+            ctx.mozImageSmoothingEnabled = false;
+            ctx.webkitImageSmoothingEnabled = false;
+            ctx.msImageSmoothingEnabled = false;
+
         }
     },
 
@@ -111,6 +116,10 @@ const Renderer = {
         const lanes = ["left", "down", "up", "right"];
         const img = assets.arrows[lanes[lane]];
         if (img.complete) ctx.drawImage(img, 150 + lane * 100, y, 80, 80);
+        ctx.imageSmoothingEnabled = false;
+        ctx.mozImageSmoothingEnabled = false;
+        ctx.webkitImageSmoothingEnabled = false;
+        ctx.msImageSmoothingEnabled = false;
     },
 
     drawText(text, x, y, size = 24, color = "white") {
