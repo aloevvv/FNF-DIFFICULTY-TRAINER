@@ -339,14 +339,15 @@ const GameplayState = {
 
         if (this.judgeTimer > 0) this.judgeTimer -= 16;
         const msPerBeat = 60000 / this.bpm;
-        const missWindow = judgeWindows.shit * msPerBeat;
+const missWindow = judgeWindows.shit * msPerBeat;
 
-        this.notes.forEach(note => {
-            if (!note.hit && t - note.time > missWindow) {
-                note.hit = true;
-                this.misses++;
-            }
-        });
+this.notes.forEach(note => {
+    if (!note.hit && t > note.time + missWindow) {
+        note.hit = true;
+        this.misses++;
+    }
+});
+
 
         if (this.notes.length > 0) {
             const lastNoteTime = this.notes[this.notes.length - 1].time;
@@ -358,8 +359,15 @@ const GameplayState = {
     },
 
     tryHit(lane, t) {
-        const note = this.notes.find(n => n.lane === lane && !n.hit);
-        if (!note) return;
+      const msPerBeat = 60000 / this.bpm;
+    const maxWindow = judgeWindows.shit * msPerBeat;
+    const note = this.notes.find(n => 
+        n.lane === lane && 
+        !n.hit && 
+        Math.abs(t - n.time) <= maxWindow
+    );
+
+    if (!note) return;
 
         const result = judgeNotePress(note, t, this.bpm);
 
@@ -381,13 +389,12 @@ const GameplayState = {
         const t = getSongTime();
 
         this.notes.forEach(note => {
-            if (note.hit) return;
+    if (note.hit) return;
+    const scrollSpeed = (this.bpm / 100) * 0.45;
+    const y = 100 + (note.time - t) * scrollSpeed;
+    Renderer.drawNote(note.lane, y);
+});
 
-            const scrollSpeed = this.bpm / 100;
-            const y = 500 - (t - note.time) * scrollSpeed * 0.45;
-
-            Renderer.drawNote(note.lane, y);
-        });
 
         if (this.judgeTimer > 0) {
             Renderer.drawText(
