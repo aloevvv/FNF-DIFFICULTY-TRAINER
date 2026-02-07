@@ -199,6 +199,10 @@ const SongSelectState = {
 
         this.index = (this.index + this.songs.length) % this.songs.length;
 
+        if (Input.justPressed("Escape")) {
+        changeState(MenuState);
+    }
+
         if (Input.justPressed("Enter")) {
             const songFile = this.songs[this.index].file;
 
